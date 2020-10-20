@@ -7,12 +7,26 @@ module top(
 
 reg [16:0] counter;
 reg speaker;
-parameter clkdivider = 100000000/440/2;  // This fits in 17 bits, hence the counter size
+parameter tone440 = 100000000/440/2;  // This fits in 17 bits, hence the counter size
 
-reg [25:0] tone;
+reg [30:0] tone;
 always @(posedge CLK100MHZ) tone <= tone+1;
 
-always @(posedge CLK100MHZ) if(counter==0) counter <= (tone[23] ? clkdivider-1 : clkdivider/2-1); else counter <= counter-1;
+wire [6:0] fastramp = (tone[25] ? tone[24:18] : ~tone[24:18]);
+wire [6:0] slowramp = (tone[28] ? tone[27:21] : ~tone[27:21]);
+wire [16:0] rampdivider = {2'b01, (tone[30] ? slowramp : fastramp), 8'b000000000};
+
+
+always @(posedge CLK100MHZ)
+  if(counter==0)
+    // Let's use switch 1 to toggle between ambulance and police
+    if (sw[1])
+      counter <= rampdivider;
+    else
+      counter <= (tone[25] ? tone440-1 : tone440/2-1);
+  else
+    counter <= counter-1;
+
 always @(posedge CLK100MHZ) if(counter==0) speaker <= ~speaker;
 
 // A 7 bit counter is 0 once every 128 cycles.

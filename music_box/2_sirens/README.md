@@ -48,3 +48,36 @@ in the clkdivider parameter. Wee-ooo-wee-ooo-wee-ooo!
 
 Police Siren
 ---
+The tutorial gives a better description than I could regarding the mechanics
+of the ramp bits. Let's just transpose everything a few bits to take into
+account the 100MHz clock. Note that we're keeping the ambulance 440Hz divider
+as well.
+
+```verilog
+parameter tone440 = 100000000/440/2;  // This fits in 17 bits, hence the counter size
+
+reg [30:0] tone;
+always @(posedge CLK100MHZ) tone <= tone+1;
+
+wire [6:0] fastramp = (tone[25] ? tone[24:18] : ~tone[24:18]);
+wire [6:0] slowramp = (tone[28] ? tone[27:21] : ~tone[27:21]);
+wire [16:0] rampdivider = {2'b01, (tone[30] ? slowramp : fastramp), 8'b000000000};
+```
+
+Ok cool, so now we can divide our clock either by the tone440 value or by the
+rampdivider. So why not tie that decision to a switch and then we can flip
+between the fast / slow police siren and the ambulance tone:
+
+```verilog
+always @(posedge CLK100MHZ)
+  if(counter==0)
+    // Let's use switch 1 to toggle between ambulance and police
+    if (sw[1])
+      counter <= rampdivider;
+    else
+      counter <= (tone[25] ? tone440-1 : tone440/2-1);
+  else
+    counter <= counter-1;
+```
+
+There we go. A multi-siren generator!
