@@ -86,11 +86,11 @@ else
 
 assign jd[0] = speaker; // Connect speaker wire to output,
 assign jd[1] = 1;       // Gain control. Set to 1 (low gain)
-assign jd[3] = sw[3];   // Switch 3 to shutdown pin, turning amplifier on and off.
+assign jd[3] = (square_clkdivider > 0 || sine_clkdivider > 0);
 
 // LEDs to help with debugging
 assign led[0] = speaker;   // Current wave form
-assign led[3] = sw[3];     // Sound on or off
+assign led[3] = jd[3];     // Sound on or off
 
 endmodule
 

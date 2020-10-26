@@ -10,8 +10,6 @@ module top(
 parameter clkspeed = 100000000;
 wire speaker;
 reg [6:0] level = 0;
-reg [6:0] volume_adjust = 0;
-always @(posedge CLK100MHZ) volume_adjust <= volume_adjust+1;
 PWM sPWM(.clk(CLK100MHZ), .PWM_in(level), .PWM_out(speaker));
 
 // Create a 440Hz square wave signal

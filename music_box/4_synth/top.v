@@ -9,9 +9,7 @@ module top(
 // PWM generator.
 parameter clkspeed = 100000000;
 wire speaker;
-reg [16:0] level;
-reg [6:0] volume_adjust;
-always @(posedge CLK100MHZ) volume_adjust <= volume_adjust+1;
+reg [4:0] level; // Only using 5 of the 7 bits will lower the volume by 4x
 PWM sPWM(.clk(CLK100MHZ), .PWM_in(level), .PWM_out(speaker));
 
 // Create a 440HZ square wave signal
@@ -20,33 +18,26 @@ reg [16:0] counter;
 always @(posedge CLK100MHZ) if(counter==0) counter <= clkdivider-1; else counter <= counter-1;
 always @(posedge CLK100MHZ) if(counter==0) level <= ~level;
 
-// Connect speaker wire to output, lowering the volume with our
-// 7 bit counter. Divides the signal level by 128 times.
-assign jd[0] = speaker & (volume_adjust == 0);
-// Set switch 0 to gain control. 1 is low gain, so lets make that default
-assign jd[1] = ~sw[0];
-// Set switch 3 to toggle shutdown pin, turning amplifier on and off.
-assign jd[3] = sw[3];
+assign jd[0] = speaker; // Connect speaker wire to output
+assign jd[1] = 1;       // Gain control. Set to 1 (low gain)
+assign jd[3] = sw[3];   // Turn amp on / off
 
 // LEDs to help with debugging
 assign led[0] = speaker;   // Current wave form
-assign led[1] = jd[0];     // Attenuated signal sent to PMOD AMP
-assign led[3] = sw[3];     // Sound on or off
 
 endmodule
 
 module PWM(
     input clk,
-    input [16:0] PWM_in,
+    input [7:0] PWM_in,
     output PWM_out
 );
 
-// By having a counter that is one bit short of
-// the input means that we can produce a full duty
-// cycle with all 1's on the input.
-reg [15:0] cnt;
+// Making the cnt register an extra bit wide will reduce
+// the volume by 50%, as the maximum duty cycle will only
+// be 50%.
+reg [8:0] cnt = 0;
 always @(posedge clk) cnt <= cnt + 1'b1;
 
-assign PWM_out = (PWM_in > cnt);  // comparator
+assign PWM_out = (PWM_in > cnt);
 endmodule
-
