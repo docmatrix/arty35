@@ -16,7 +16,7 @@ is mapping the buttons to different frequencies.
 
 Frequency Mapping
 ---
-There at two clock dividers for the sine wave generator and the square wave.
+There are two clock dividers for the sine wave generator and the square wave.
 Map the buttons to C4, D4, E4 and F4 respectively, and note that each button
 will take precedence over the previous. In other words, this will only play
 one note at a time.
